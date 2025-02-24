@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ping Pong</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 10,
+            speedX: 5,
+            speedY: 5,
+        };
+
+        const paddleHeight = 80;
+        const paddleWidth = 10;
+        const leftPaddle = {
+            x: 0,
+            y: canvas.height / 2 - paddleHeight / 2,
+            speed: 7,
+        };
+
+        const rightPaddle = {
+            x: canvas.width - paddleWidth,
+            y: canvas.height / 2 - paddleHeight / 2,
+            speed: 4,
+        };
+
+        let leftScore = 0;
+        let rightScore = 0;
+
+        let moveUp = false;
+        let moveDown = false;
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp") moveUp = true;
+            if (e.key === "ArrowDown") moveDown = true;
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowUp") moveUp = false;
+            if (e.key === "ArrowDown") moveDown = false;
+        });
+
+        function movePaddle() {
+            if (moveUp && leftPaddle.y > 0) {
+                leftPaddle.y -= leftPaddle.speed;
+            }
+            if (moveDown && leftPaddle.y < canvas.height - paddleHeight) {
+                leftPaddle.y += leftPaddle.speed;
+            }
+        }
+
+        function moveComputerPaddle() {
+            const paddleCenter = rightPaddle.y + paddleHeight / 2;
+            if (paddleCenter < ball.y - 35) {
+                rightPaddle.y += rightPaddle.speed;
+            }
+            if (paddleCenter > ball.y + 35) {
+                rightPaddle.y -= rightPaddle.speed;
+            }
+            if (rightPaddle.y < 0) rightPaddle.y = 0;
+            if (rightPaddle.y > canvas.height - paddleHeight) rightPaddle.y = canvas.height - paddleHeight;
+        }
+
+        function moveBall() {
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.speedY = -ball.speedY;
+            }
+
+            if (
+                (ball.x - ball.radius < paddleWidth && ball.y > leftPaddle.y && ball.y < leftPaddle.y + paddleHeight) ||
+                (ball.x + ball.radius > canvas.width - paddleWidth && ball.y > rightPaddle.y && ball.y < rightPaddle.y + paddleHeight)
+            ) {
+                ball.speedX = -ball.speedX;
+            }
+
+            if (ball.x < 0) {
+                rightScore++;
+                resetBall();
+            } else if (ball.x > canvas.width) {
+                leftScore++;
+                resetBall();
+            }
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.speedX = -ball.speedX;
+            ball.speedY = Math.random() * 10 - 5;
+        }
+
+        function draw() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.setLineDash([5, 15]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.strokeStyle = "white";
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = "white";
+            ctx.fillRect(leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
+            ctx.fillRect(rightPaddle.x, rightPaddle.y, paddleWidth, paddleHeight);
+
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.closePath();
+
+            ctx.font = "32px Arial";
+            ctx.fillText(leftScore, canvas.width / 4, 50);
+            ctx.fillText(rightScore, 3 * canvas.width / 4, 50);
+        }
+
+        function gameLoop() {
+            movePaddle();
+            moveComputerPaddle();
+            moveBall();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
